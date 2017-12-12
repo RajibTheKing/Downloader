@@ -5,8 +5,18 @@
  */
 package downloader;
 
+import static downloader.Downloader.menubar;
 import java.awt.Rectangle;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.io.File;
 import java.util.Vector;
+import javax.swing.JFileChooser;
+import javax.swing.JMenu;
+import javax.swing.JMenuBar;
+import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
+import javax.swing.filechooser.FileSystemView;
 import javax.swing.table.DefaultTableModel;
 
 /**
@@ -19,13 +29,19 @@ public class DownloadStatus extends javax.swing.JFrame {
      * Creates new form DownloadStatus
      */
     DefaultTableModel dm;
+    DownloadThread dt;
+    JMenuBar menubar;
     public DownloadStatus() {
         initComponents();
         setLocationRelativeTo(null);
         initializeTable();
+        initializeMenuItem();
+        this.dt = new DownloadThread(this);
         
-        AddNewRow("www.google.com", "Processing");
-        AddNewRow("www.FaceBook.com", "Processing");
+        //AddNewRow("www.google.com", "Processing");
+        //AddNewRow("www.FaceBook.com", "Processing");
+        
+        
 
     }
     private void initializeTable()
@@ -44,6 +60,68 @@ public class DownloadStatus extends javax.swing.JFrame {
         
         
     }
+    private void SelectFileFromDesktop()
+    {
+        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+
+        int returnValue = jfc.showOpenDialog(null);
+        // int returnValue = jfc.showSaveDialog(null);
+
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+                File selectedFile = jfc.getSelectedFile();
+                System.out.println(selectedFile.getAbsolutePath());
+        }
+    }
+    private void initializeMenuItem() 
+    {
+        menubar = new JMenuBar();
+        
+        JMenu file = new JMenu("File");
+        JMenuItem fileNew = new JMenuItem("Add New Links");
+        fileNew.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Inside New ");
+                SelectFileFromDesktop();
+            }
+        });
+        
+        JMenuItem fileExit = new JMenuItem("Exit");
+        fileExit.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.exit(0);
+            }
+        });
+        
+        file.add(fileNew);
+        file.add(fileExit);
+        
+        JMenu tools = new JMenu("Tools");
+        JMenuItem toolsOption = new JMenuItem("Current Status");
+        tools.add(toolsOption);
+        toolsOption.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Rajib Chandra Das");
+            }
+        });
+        JMenu help = new JMenu("Help");
+
+        JMenuItem helpAbout = new JMenuItem("About");
+
+        helpAbout.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                JOptionPane.showMessageDialog(null, "TheKing-Downloader\nCreated By: \nRajib Chandra Das\nShahjalal University of Science & Technology\nSoftware Version: 1.0", "About", 1);
+            }
+        });
+        help.add(helpAbout);
+        menubar.add(file);
+        menubar.add(tools);
+        menubar.add(help);
+        
+        setJMenuBar(menubar);
+
+    }
+    
     
     public void AddNewRow(String fileUrl, String status)
     {
@@ -52,8 +130,23 @@ public class DownloadStatus extends javax.swing.JFrame {
         data.add(status);
         
         dm.addRow(data);
+        
+        this.dt = new DownloadThread( this);
+        this.dt.startDownload(dm.getRowCount() - 1, fileUrl);
+    }
+    
+    public void updateRow(int row, int percentage)
+    {
+       dm.setValueAt(percentage+"%", row, 1);
+       progressBar.setValue(percentage);
+    }
+    
+    public boolean getDownloadSlotAvailable()
+    {
+        return this.dt.getDownloadSlotAvailable();
     }
 
+            
     /**
      * This method is called from within the constructor to initialize the form.
      * WARNING: Do NOT modify this code. The content of this method is always
@@ -66,6 +159,7 @@ public class DownloadStatus extends javax.swing.JFrame {
         progressBar = new javax.swing.JProgressBar();
         jScrollPane1 = new javax.swing.JScrollPane();
         downloadTable = new javax.swing.JTable();
+        jLabel1 = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -87,17 +181,32 @@ public class DownloadStatus extends javax.swing.JFrame {
         });
         jScrollPane1.setViewportView(downloadTable);
 
+        jLabel1.setText("TheKing-Downloader");
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-            .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 719, Short.MAX_VALUE)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addGap(25, 25, 25)
+                .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGap(27, 27, 27))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap()
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 707, Short.MAX_VALUE)
+                .addContainerGap())
+            .addGroup(layout.createSequentialGroup()
+                .addGap(288, 288, 288)
+                .addComponent(jLabel1)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 319, Short.MAX_VALUE)
+                .addGap(10, 10, 10)
+                .addComponent(jLabel1)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
         );
@@ -111,6 +220,7 @@ public class DownloadStatus extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable downloadTable;
+    private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JProgressBar progressBar;
     // End of variables declaration//GEN-END:variables
