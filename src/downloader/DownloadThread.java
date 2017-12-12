@@ -121,6 +121,10 @@ public class DownloadThread extends Thread
                 //System.out.println("Downlad Status: " + (downloaded * 100) / (contentLength * 1.0) + "%");
                 float percentage = (float) ((downloaded * 100) / (contentLength * 1.0));
                 int percentageInInteger = (int) percentage;
+                if(percentageInInteger == 100)
+                {
+                    Downloader.hashMap.put(search, new Boolean(true));
+                }
                 downloadStatus.updateRow(this.rowNumber, percentageInInteger);
                 
    

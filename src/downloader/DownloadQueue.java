@@ -24,6 +24,7 @@ public class DownloadQueue extends Thread
     
     void AddNewLinkToQueue(String urlString)
     {
+        System.out.println("TheKing--> Adding new url to Queue: "  + urlString);
         queue.add(urlString);
     }
     
@@ -43,7 +44,18 @@ public class DownloadQueue extends Thread
                 else
                 {
                     String urlString = this.queue.poll();
-                    Downloader.downLoadStatusFrame.AddNewRow(urlString, "Queued");
+                    
+                    if( Downloader.hashMap.containsKey(urlString) == false)
+                    {
+                        Downloader.hashMap.put(urlString, new Boolean(false));
+                    }
+                    
+                    if(Downloader.hashMap.get(urlString).equals(new Boolean(false)))
+                    {
+                        System.out.println("Adding New Row with Url: " + urlString);
+                        Downloader.downLoadStatusFrame.AddNewRowAndStartDownload(urlString, "Queued");
+                    }
+                    
                 }
             }
         }catch(Exception e){

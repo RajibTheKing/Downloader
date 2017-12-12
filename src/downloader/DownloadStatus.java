@@ -9,15 +9,13 @@ import static downloader.Downloader.menubar;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.util.Vector;
-import javax.swing.JFileChooser;
-import javax.swing.JMenu;
-import javax.swing.JMenuBar;
-import javax.swing.JMenuItem;
-import javax.swing.JOptionPane;
-import javax.swing.filechooser.FileSystemView;
+import java.io.*;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import org.json.*;
 
 /**
  *
@@ -35,6 +33,7 @@ public class DownloadStatus extends javax.swing.JFrame {
         initComponents();
         setLocationRelativeTo(null);
         initializeTable();
+        readHistory();
         initializeMenuItem();
         this.dt = new DownloadThread(this);
         
@@ -44,10 +43,11 @@ public class DownloadStatus extends javax.swing.JFrame {
         
 
     }
+    
     private void initializeTable()
     {
         dm = new DefaultTableModel(0, 0);
-        String header[] = new String[]{"URL", "Status"};
+        String header[] = new String[]{"URL", "Status", "Datetime"};
         dm.setColumnIdentifiers(header);
         downloadTable.setModel(dm);
         
@@ -55,21 +55,85 @@ public class DownloadStatus extends javax.swing.JFrame {
         int h = r.height;
         int w = r.width;
         System.out.println("");
-        downloadTable.getColumnModel().getColumn(0).setPreferredWidth(80 * w / 100);
-        downloadTable.getColumnModel().getColumn(1).setPreferredWidth(20 * w / 100);
+        downloadTable.getColumnModel().getColumn(0).setPreferredWidth(70 * w / 100);
+        downloadTable.getColumnModel().getColumn(1).setPreferredWidth(10 * w / 100);
+        downloadTable.getColumnModel().getColumn(2).setPreferredWidth(20 * w / 100);
         
         
     }
+    
+    private void readHistory() 
+    {
+        BufferedReader br = null;
+        String everything = "";
+        try {
+            br = new BufferedReader(new FileReader("history.json"));
+            StringBuilder sb = new StringBuilder();
+            String line = br.readLine();
+
+            while (line != null) {
+                sb.append(line);
+                sb.append(System.lineSeparator());
+                line = br.readLine();
+            }
+            everything = sb.toString();
+            br.close();
+            System.out.println("TheKing--> readHistory: " + everything);
+            
+                    
+            JSONObject obj = new JSONObject(everything);
+
+            //List<String> list = new ArrayList<String>();
+            
+            JSONArray array = obj.getJSONArray("entry");
+            for(int i = 0 ; i < array.length() ; i++)
+            {
+                //list.add(array.getJSONObject(i).getString("interestKey"));
+                String fileurl = array.getJSONObject(i).getString("URL");
+                String status = array.getJSONObject(i).getString("Status");
+                String dateTime = array.getJSONObject(i).getString("Datetime");
+                Downloader.hashMap.put(fileurl, new Boolean(true));
+                AddRow(fileurl, status, dateTime);
+            }
+
+
+            
+
+            
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+
+
+
+    }
+    
     private void SelectFileFromDesktop()
     {
-        JFileChooser jfc = new JFileChooser(FileSystemView.getFileSystemView().getHomeDirectory());
+        JFileChooser jfc = new JFileChooser("./");
 
         int returnValue = jfc.showOpenDialog(null);
         // int returnValue = jfc.showSaveDialog(null);
 
-        if (returnValue == JFileChooser.APPROVE_OPTION) {
-                File selectedFile = jfc.getSelectedFile();
-                System.out.println(selectedFile.getAbsolutePath());
+        if (returnValue == JFileChooser.APPROVE_OPTION) 
+        {
+            File selectedFile = jfc.getSelectedFile();
+            System.out.println(selectedFile.getAbsolutePath());
+                
+            try {
+                Scanner scan = new Scanner(selectedFile);
+                while(scan.hasNext())
+                {
+                    String nextUrlString = scan.nextLine();
+                    System.out.println(nextUrlString);
+                    Downloader.downloadQueue.AddNewLinkToQueue(nextUrlString);
+                    
+                }
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(DownloadStatus.class.getName()).log(Level.SEVERE, null, ex);
+            }
+                
         }
     }
     private void initializeMenuItem() 
@@ -77,8 +141,9 @@ public class DownloadStatus extends javax.swing.JFrame {
         menubar = new JMenuBar();
         
         JMenu file = new JMenu("File");
-        JMenuItem fileNew = new JMenuItem("Add New Links");
-        fileNew.addActionListener(new ActionListener() {
+        
+        JMenuItem fileListOfLink = new JMenuItem("Add list of Links From a file ");
+        fileListOfLink.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 System.out.println("Inside New ");
@@ -93,7 +158,7 @@ public class DownloadStatus extends javax.swing.JFrame {
             }
         });
         
-        file.add(fileNew);
+        file.add(fileListOfLink);
         file.add(fileExit);
         
         JMenu tools = new JMenu("Tools");
@@ -123,16 +188,14 @@ public class DownloadStatus extends javax.swing.JFrame {
     }
     
     
-    public void AddNewRow(String fileUrl, String status)
+    public void AddRow(String fileUrl, String status, String dateTime)
     {
         Vector<Object> data = new Vector<Object>();
         data.add(fileUrl);
         data.add(status);
+        data.add(dateTime);
         
         dm.addRow(data);
-        
-        this.dt = new DownloadThread( this);
-        this.dt.startDownload(dm.getRowCount() - 1, fileUrl);
     }
     
     public void updateRow(int row, int percentage)
@@ -141,9 +204,57 @@ public class DownloadStatus extends javax.swing.JFrame {
        progressBar.setValue(percentage);
     }
     
+    public void AddNewRowAndStartDownload(String fileUrl, String status)
+    {
+        Vector<Object> data = new Vector<Object>();
+        data.add(fileUrl);
+        data.add(status);
+        Date date = new Date();
+        data.add(date.toString());
+        
+        dm.addRow(data);
+        
+        this.dt = new DownloadThread( this);
+        this.dt.startDownload(dm.getRowCount() - 1, fileUrl);
+    }
+    
+    
     public boolean getDownloadSlotAvailable()
     {
         return this.dt.getDownloadSlotAvailable();
+    }
+    
+    public void updateHistoryFile() {
+
+        JSONObject jsonData = new JSONObject();
+        JSONArray jsonArray = new JSONArray();
+
+        int nRow = this.dm.getRowCount(), nCol = this.dm.getColumnCount();
+        try {
+            //Object[][] tableData = new Object[nRow][nCol];
+            for (int i = 0; i < nRow; i++) {
+                //for (int j = 0 ; j < nCol ; j++)
+                //tableData[i][j] = dtm.getValueAt(i,j);
+                JSONObject detailJson = new JSONObject();
+                detailJson.put("URL", this.dm.getValueAt(i, 0).toString());
+                detailJson.put("Status", this.dm.getValueAt(i, 1).toString());
+                detailJson.put("Datetime", this.dm.getValueAt(i, 2).toString());
+                jsonArray.put(detailJson);
+            }
+            jsonData.put("entry", jsonArray);
+            System.out.println("TheKing--> jsonData: " + jsonData.toString());
+            
+            Writer writer = new BufferedWriter(new OutputStreamWriter(new FileOutputStream("history.json"), "utf-8"));
+            
+            writer.write(jsonData.toString());
+            
+            writer.close();
+            
+
+        } catch (Exception e) {
+            System.out.println(e.toString());
+        }
+
     }
 
             
@@ -168,11 +279,11 @@ public class DownloadStatus extends javax.swing.JFrame {
 
             },
             new String [] {
-                "URL", "Status"
+                "URL", "Status", "Datetime"
             }
         ) {
             Class[] types = new Class [] {
-                java.lang.String.class, java.lang.String.class
+                java.lang.String.class, java.lang.String.class, java.lang.String.class
             };
 
             public Class getColumnClass(int columnIndex) {
@@ -193,19 +304,19 @@ public class DownloadStatus extends javax.swing.JFrame {
                 .addGap(27, 27, 27))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 707, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 977, Short.MAX_VALUE)
                 .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addGap(288, 288, 288)
+                .addGap(419, 419, 419)
                 .addComponent(jLabel1)
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(10, 10, 10)
+                .addContainerGap()
                 .addComponent(jLabel1)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGap(4, 4, 4)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))

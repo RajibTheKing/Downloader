@@ -8,6 +8,7 @@ package downloader;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.HashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JFrame;
@@ -28,19 +29,29 @@ public class Downloader {
     public static DownloadStatus downLoadStatusFrame;
     public static DownloadQueue downloadQueue;
     public static JMenuBar menubar;
+    public static HashMap hashMap = new HashMap();
     
     public static void main(String[] args) 
     {
-        downLoadStatusFrame = new DownloadStatus();
-        downLoadStatusFrame.setVisible(true);
-
-        //String urlString = "https://www.planwallpaper.com/static/images/6768666-1080p-wallpapers.jpg";
-        //String urlString = "https://streams.my-free-mp3.net/puWBZB:EHx1rB";
-        String urlString = "http://download.music.com.bd/Music/C/Cactus/Cactus%20-%20Nil%20Nirjone%20(music.com.bd).mp3";
-
         downloadQueue = new DownloadQueue();
         
+        downLoadStatusFrame = new DownloadStatus();
+        downLoadStatusFrame.setVisible(true);
+        
+
+        
+        Runtime.getRuntime().addShutdownHook(new Thread(new Runnable(){
+            public void run(){
+                // what you want to do
+                System.out.println("ShutdownHooked ");    
+                downLoadStatusFrame.updateHistoryFile();
+            }
+        }
+        ));
+        
     }
+    
+    
     
     
     
