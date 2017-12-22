@@ -39,6 +39,11 @@ public class DownloadThread extends Thread
         
         URL url;
         try {
+            if(urlString.compareTo("") == 0)
+            {
+                downloadStatus.updateRow(this.rowNumber, "Invalid");
+                return;
+            }
             url = new URL(urlString);
             System.out.println(FilenameUtils.getBaseName(url.getPath())); // -> file
             System.out.println(FilenameUtils.getExtension(url.getPath())); // -> xml
@@ -97,7 +102,11 @@ public class DownloadThread extends Thread
             //Getting content Length
             int contentLength = con.getContentLength();
             System.out.println("File contentLength = " + contentLength + " bytes");
-
+            if(contentLength <= 0)
+            {
+                downloadStatus.updateRow(this.rowNumber, "NotFound");
+                return;
+            }
 
             // Requesting input data from server
             inputStream = con.getInputStream();

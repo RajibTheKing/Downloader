@@ -6,6 +6,7 @@
 package downloader;
 
 import static downloader.Downloader.menubar;
+import java.awt.Dimension;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -136,6 +137,32 @@ public class DownloadStatus extends javax.swing.JFrame {
                 
         }
     }
+    
+    private void AskUserFordata() {
+        JTextArea textArea = new JTextArea();
+        textArea.setEditable(true);
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.requestFocus();
+        textArea.requestFocusInWindow();
+        scrollPane.setPreferredSize(new Dimension(800, 600));
+        JOptionPane.showMessageDialog(this, scrollPane,"Paste Info", JOptionPane.PLAIN_MESSAGE);
+        String info = textArea.getText();
+        if(info.length() == 0)
+        {
+            JOptionPane.showMessageDialog(this, "User input is not found");
+        }
+        else
+        {
+            String linkList[] = info.split("\n");
+            for(String value: linkList)
+            {
+                System.out.println("TheKing--> value = "+ value);
+                Downloader.downloadQueue.AddNewLinkToQueue(value);
+            }   
+               
+        }
+    }
+
     private void initializeMenuItem() 
     {
         menubar = new JMenuBar();
@@ -151,6 +178,16 @@ public class DownloadStatus extends javax.swing.JFrame {
             }
         });
         
+        JMenuItem userInputListOfLink = new JMenuItem("Add list from User Input");
+        userInputListOfLink.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                System.out.println("Inside Add list from User Input");
+                AskUserFordata();
+            }
+        });
+        
+        
         JMenuItem fileExit = new JMenuItem("Exit");
         fileExit.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -159,6 +196,7 @@ public class DownloadStatus extends javax.swing.JFrame {
         });
         
         file.add(fileListOfLink);
+        file.add(userInputListOfLink);
         file.add(fileExit);
         
         JMenu tools = new JMenu("Tools");
@@ -202,6 +240,13 @@ public class DownloadStatus extends javax.swing.JFrame {
     {
        dm.setValueAt(percentage+"%", row, 1);
        progressBar.setValue(percentage);
+       downloadTable.scrollRectToVisible(downloadTable.getCellRect(downloadTable.getRowCount()-1, 0, true));
+       
+    }
+     
+    void updateRow(int row, String str) 
+    {
+        dm.setValueAt(str, row, 1);
     }
     
     public void AddNewRowAndStartDownload(String fileUrl, String status)
@@ -271,6 +316,7 @@ public class DownloadStatus extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         downloadTable = new javax.swing.JTable();
         jLabel1 = new javax.swing.JLabel();
+        jButton_ClearLog = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -294,36 +340,65 @@ public class DownloadStatus extends javax.swing.JFrame {
 
         jLabel1.setText("TheKing-Downloader");
 
+        jButton_ClearLog.setText("Clear Log");
+        jButton_ClearLog.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton_ClearLogActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addGap(25, 25, 25)
-                .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(27, 27, 27))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap()
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 977, Short.MAX_VALUE)
-                .addContainerGap())
             .addGroup(layout.createSequentialGroup()
-                .addGap(419, 419, 419)
-                .addComponent(jLabel1)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(12, 12, 12)
+                                .addComponent(progressBar, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addComponent(jScrollPane1)))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(419, 419, 419)
+                                .addComponent(jLabel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(444, 444, 444)
+                                .addComponent(jButton_ClearLog, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGap(22, 22, 22)))
+                        .addGap(422, 422, 422)))
+                .addContainerGap())
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap()
                 .addComponent(jLabel1)
-                .addGap(4, 4, 4)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 287, Short.MAX_VALUE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 380, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                .addComponent(progressBar, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(29, 29, 29)
+                .addComponent(jButton_ClearLog)
+                .addGap(20, 20, 20))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+    private void jButton_ClearLogActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton_ClearLogActionPerformed
+        // TODO add your handling code here:
+        if (this.dm.getRowCount() > 0) 
+        {
+            for (int i = this.dm.getRowCount() - 1; i > -1; i--) 
+            {
+                this.dm.removeRow(i);
+            }
+        }
+    }//GEN-LAST:event_jButton_ClearLogActionPerformed
 
     /**
      * @param args the command line arguments
@@ -331,8 +406,11 @@ public class DownloadStatus extends javax.swing.JFrame {
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable downloadTable;
+    private javax.swing.JButton jButton_ClearLog;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JProgressBar progressBar;
     // End of variables declaration//GEN-END:variables
+
+
 }
